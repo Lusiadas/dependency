@@ -1,22 +1,8 @@
 function dependency -d 'install a missing dependency'
 
   # Load dependencies
-  set -l instructions (dirname (status -f))/../auxiliary_functions/dep_instructions.fish
-  test -s $instructions
-  and source $instructions
-  function dep_plugin
-    for plugin in (string match -vr '^((un)?install|--)$' $argv[1]) $argv[2..-1]
-      if string match -q uninstall $argv[1]
-        omf remove (basename $plugin) >/dev/null 2>&1
-        or fisher rm (basename $plugin) >/dev/null 2>&1
-      else
-        type -t (basename $plugin) 2>/dev/null | string match -q function
-        and continue
-        type -q omf
-        and omf install $plugin >/dev/null 2>&1
-        or fisher add $plugin >/dev/null 2>&1
-      end
-    end
+  for function in (dirname (status -f))/../auxiliary_functions/dep_*.fish
+    source $function
   end
   dep_plugin https://gitlab.com/lusiadas/feedback
 
