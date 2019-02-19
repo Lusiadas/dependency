@@ -1,7 +1,5 @@
 # dependency
 
-<br/>
-
 ## Description
 
 A system agnostic function to have packages installed, updated, or removed.
@@ -14,7 +12,7 @@ A system agnostic function to have packages installed, updated, or removed.
 
 - `-r/--remove`, uninstall packages.
 
-- `-n/--name`, output the name of a plugin that calls for the installation/update of given packages and as for permission to have them installed/updated.
+- `-n/--name [function]`, output the name of a function that calls for the installation/update of given packages, and ask for permission to have them installed/updated.
 
 - `-f/--force [package]`, when uninstalling a package, do so by simply deleating its binary.
 
