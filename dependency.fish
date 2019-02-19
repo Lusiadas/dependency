@@ -5,9 +5,9 @@ function dependency -d 'manage dependencies'
     switch "$argv[1]"
       case uninstall
         if type -q omf
-          omf remove (basename $argv[2]) >/dev/null 2>&1
+          omf remove (command basename $argv[2]) >/dev/null 2>&1
         else
-          fisher rm (basename $argv[2]) >/dev/null 2>&1
+          fisher rm (command basename $argv[2]) >/dev/null 2>&1
         end
       case check
         if type -q omf
@@ -17,7 +17,7 @@ function dependency -d 'manage dependencies'
         end
       case update
         if type -q omf
-          if omf list | string match -qr "\b"(basename $argv[2])"\b"
+          if omf list | string match -qr "\b"(command basename $argv[2])"\b"
             omf update $argv[2] >"$PREFIX"/tmp/dep_plugin 2>&1
             if grep -qE '(Error|Could not find)'"$PREFIX"/tmp/dep_plugin
               command rm "$PREFIX"/tmp/dep_plugin
@@ -29,18 +29,18 @@ function dependency -d 'manage dependencies'
             omf install $argv[2] 2>&1 | not string match -qr '^(Error|Could not install)'
           end
         else
-          fisher add (basename $argv[2]) 2>&1 \
+          fisher add (command basename $argv[2]) 2>&1 \
           | not string match -qr 'cannot (add|stat)'
         end
       case '*'
-        type -t (basename $argv) 2>/dev/null | string match -q function
+        type -t (command basename $argv) 2>/dev/null | string match -q function
         and return 0
         if type -q omf
-          omf list | not string match -qr "\b"(basename $argv)"\b"
+          omf list | not string match -qr "\b"(command basename $argv)"\b"
           and omf install $argv 2>&1 \
           | not string match -qr '^(Error|Could not install)'
         else
-          fisher ls | not string match -qr "\b"(basename $argv)"\b"
+          fisher ls | not string match -qr "\b"(command basename $argv)"\b"
           and fisher add $argv 2>&1 \
           | not string match -qr 'cannot (add|stat)'
         end
@@ -136,7 +136,7 @@ function dependency -d 'manage dependencies'
         end
         set --query _flag_update
         or continue
-        string match $flags[$i] _flag_pip
+        string match -q $flags[$i] _flag_pip
         and pip install --upgrade pip >/dev/null
         or npm update npm -g
       end
@@ -147,29 +147,29 @@ function dependency -d 'manage dependencies'
     and dim -n "Checking for dependencies... "
     set -l dependencies (printf '%s\n' $argv $_flag_pip $_flag_npm $_flag_plugin $_flag_force | sort | uniq)
     for dependency in $dependencies
-      if type -q (basename $dependency)
+      if type -q (command basename $dependency)
         set -a installed $dependency
         continue
       end
-      if contains (basename $dependency) $argv
+      if contains (command basename $dependency) $argv
         if eval $verify $dependency >/dev/null 2>&1
           set -a installed $dependency
           continue
         end
       end
-      if contains (basename $dependency) $_flag_plugin $argv
+      if contains (command basename $dependency) $_flag_plugin $argv
         if dep_plugin check $dependency
           set -a installed $dependency
           continue
         end
       end
-      if contains (basename $dependency) $_flag_pip $argv
+      if contains (command basename $dependency) $_flag_pip $argv
         if pip show -q $dependency
           set -a installed $dependency
           continue
         end
       end
-      if contains (basename $dependency) $flag_npm $argv
+      if contains (command basename $dependency) $flag_npm $argv
         if npm list -g | string match -qe $dependency
           set -a installed $dependency
           continue
@@ -268,8 +268,8 @@ function dependency -d 'manage dependencies'
       set -l failed
       for dependency in $packages
         set --query _flag_update
-        and dim -on "Updating |$dependency|... "
-        or dim -on "Installing |$dependency|... "
+        and dim -on "Updating |"(command basename $dependency)"|... "
+        or dim -on "Installing |"(command basename $dependency)"|... "
         if contains $dependency $argv
           if set --query _flag_update
             eval "$sudo" $update $dependency 2>/dev/null \
