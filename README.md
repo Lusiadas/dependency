@@ -1,34 +1,28 @@
 # dependency
 
-> *A plugin for [Oh My Fish](https://www.github.com/oh-my-fish/oh-my-fish).*
-
-[![GPL License](https://img.shields.io/badge/license-GPL-blue.svg?longCache=true&style=flat-square)](/LICENSE)
-[![Fish Shell Version](https://img.shields.io/badge/fish-v3.0-blue.svg?style=flat-square)](https://fishshell.com)
-[![Oh My Fish Framework](https://img.shields.io/badge/Oh%20My%20Fish-Framework-blue.svg?style=flat-square)](https://www.github.com/oh-my-fish/oh-my-fish)
-
 <br/>
 
 ## Description
 
-A plugin to install or remove packages that is system agnostic. It's meant for use on scripts.
+A system agnostic function to have packages installed, updated, or removed.
 
 ## Options
 
 - `-i/--install`, install packages. This is the default option.
 
-- `-n/--name`, when installing packages, output the name of the plugin that requires such dependencies to be installed.
+- `-u/--update`, update or, if not installed, install packages
 
-- `-u/--uninstall`, uninstall packages.
+- `-r/--remove`, uninstall packages.
+
+- `-n/--name`, output the name of a plugin that calls for the installation/update of given packages and as for permission to have them installed/updated.
 
 - `-f/--force [package]`, when uninstalling a package, do so by simply deleating its binary.
 
-- `--pip [package]`, describe a package to be handled using `pip`.
+- `--p/pip [package]`, describe a package to be handled using `pip`.
 
-- `--pip3 [package]`, describe a package to be handled using `pip3`.
+- `--N/npm [package]`, describe a package to be handled using `npm`.
 
-- `--npm [package]`, describe a package to be handled using `npm`.
-
-- `--plugin [package]`, describe a fish plugin to be handled with either `omf` or `fisher` by passing the **full address** of its git repository.
+- `--P/plugin [package]`, describe a fish plugin to be handled with either `omf` or `fisher`. To install, pass the **address** of its git repository.
 
 ## Install
 
