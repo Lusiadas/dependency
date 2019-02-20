@@ -18,8 +18,8 @@ function dependency -d 'manage dependencies'
       case update
         if type -q omf
           if omf list | string match -qr "\b"(command basename $argv[2])"\b"
-            omf update $argv[2] >"$PREFIX"/tmp/dep_plugin 2>&1
-            if grep -qE '(Error|Could not find)'"$PREFIX"/tmp/dep_plugin
+            omf update (command basename $argv[2]) >"$PREFIX"/tmp/dep_plugin 2>&1
+            if grep -qE '(Error|Could not find)' "$PREFIX"/tmp/dep_plugin
               command rm "$PREFIX"/tmp/dep_plugin
               return 1
             end
@@ -50,7 +50,7 @@ function dependency -d 'manage dependencies'
 
   # Parse argument
   function dep_main
-    if not argparse -x (string join -- ' -x ' i,{u,r,f} u,{r,f} | string split ' ') 'i/install' 'u/update=' 'r/remove' 'N/npm=+' 'f/force=+' 'p/pip=+' 'P/plugin=+' -- $argv 2>"$PREFIX"/tmp/err
+    if not argparse -x (string join -- ' -x ' i,{u,r,f} u,{r,f} | string split ' ') 'i/install' 'u/update' 'r/remove' 'n/name=' 'f/force=+' 'N/npm=+' 'p/pip=+' 'P/plugin=+' -- $argv 2>"$PREFIX"/tmp/err
       err (grep -m 1 -oP '(?<=: ).+' "$PREFIX"/tmp/err)
       return 1
     end
@@ -65,6 +65,8 @@ function dependency -d 'manage dependencies'
     end
 
     # Check for a default package manager
+    test -n "$_flag_update" -o -n "$_flag_remove"
+    and dim -n "Checking available package managers..."
     set -l verify
     set -l install
     set -l update
@@ -130,7 +132,7 @@ function dependency -d 'manage dependencies'
             string match -q $flags[$i] _flag_pip
             and set -l packages $_flag_pip
             or set -l packages $_flag_npm
-            err -o "|"$flag[(math $i + 2)]"| isn't installed. Cancelling the installation of |"(string join '|, |' $packages)"|"
+            err -o "|"$flags[(math $i + 2)]"| isn't installed. Cancelling the installation of |"(string join '|, |' $packages)"|"
             set --erase $flags[$i]
           end
         end
@@ -143,8 +145,8 @@ function dependency -d 'manage dependencies'
     end
 
     # Check if package is installed
-    test -n "$_flag_update" -o -n "$_flag_uninstall"
-    and dim -n "Checking for dependencies... "
+    test -n "$_flag_update" -o -n "$_flag_remove"
+    and dim -on "Checking for dependencies... "
     set -l dependencies (printf '%s\n' $argv $_flag_pip $_flag_npm $_flag_plugin $_flag_force | sort | uniq)
     for dependency in $dependencies
       if type -q (command basename $dependency)
@@ -179,7 +181,7 @@ function dependency -d 'manage dependencies'
     end
 
     # Remove dependencies
-    if test -n "$_flag_uninstall" -a -n "$installed"
+    if test -n "$_flag_remove" -a -n "$installed"
 
       # Offer to uninstall dependencies
       echo -en \r(tput el)
@@ -256,13 +258,12 @@ function dependency -d 'manage dependencies'
       and set -l packages $dependencies
       or set -l packages $not_installed
       if set --query _flag_name
-        if test (count $packages) -eq 1
-          read -n 1 -p "wrn -n \"Plugin |$_flag_name| requires dependency |$packages|. Install it? [y/n]: \"" | string match -qir y
-        else
-          read -n 1 -p "wrn -n \"Plugin |$_flag_name| requires dependency |$packages|. Install it? [y/n]: \"" | string match -qir y
-        end
+        test (count $packages) -eq 1
+        and wrn -o "Plugin |$_flag_name| requires dependency |$packages|. Install it? [y/n]: "
+        or wrn -o "Plugin |$_flag_name| requires dependencies |"(string match -ar '[^/]+$' $packages | string join '|, |')"|. Install them? [y/n]: "
+        read -n 1 | string match -qir y
+        or return 1
       end
-      or return 1
 
       # Find appropriate package manager to install
       set -l failed
