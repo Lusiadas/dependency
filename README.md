@@ -22,19 +22,9 @@ A system agnostic function to have packages installed, updated, or removed.
 
 - `--P/plugin [package]`, describe a fish plugin to be handled with either `omf` or `fisher`. To install, pass the **address** of its git repository.
 
-## Install
+## Disclaimer
 
-Either with omf
-
-```fish
-$ omf install dependency
-```
-
-or [fisherman](https://github.com/fisherman/fisherman)
-
-```fish
-fisher gitlab.com/lusiadas/dependency
-```
+> This script has only been tested on Termux and Debian-based operating systems, both of which use the `apt` package manager by default. The commands for verification, installation, updating and uninstallation of other default package managers have been drawn from reference. If you experience problems using this script wih your default package manager, issue reports and pull requests will be most welcome.
 
 ---
 
