@@ -11,15 +11,15 @@ function dependency -d 'manage dependencies'
         end
       case check
         if type -q omf
-          omf list | string match -qr "\b$argv[2]\b"
+          omf list | string match -qr "\b"(command basename $argv[2])"\b"
         else
-          fisher ls | string match -qr "\b$argv[2]\b"
+          fisher ls | string match -qr "\b"(command basename $argv[2])"\b"
         end
       case update
         if type -q omf
           if omf list | string match -qr "\b"(command basename $argv[2])"\b"
             omf update (command basename $argv[2]) >"$PREFIX"/tmp/dep_plugin 2>&1
-            if grep -qE '(Error|Could not find)' "$PREFIX"/tmp/dep_plugin
+            if grep -qE '(Error$|Could not find)' "$PREFIX"/tmp/dep_plugin
               command rm "$PREFIX"/tmp/dep_plugin
               return 1
             end
@@ -36,12 +36,12 @@ function dependency -d 'manage dependencies'
         type -t (command basename $argv) 2>/dev/null | string match -q function
         and return 0
         if type -q omf
-          omf list | not string match -qr "\b"(command basename $argv)"\b"
-          and omf install $argv 2>&1 \
-          | not string match -qr '^(Error|Could not install)'
+          omf list | string match -qr "\b"(command basename $argv)"\b"
+          or omf install $argv 2>&1 \
+          | not string match -qr '^(Error$|Could not install)'
         else
-          fisher ls | not string match -qr "\b"(command basename $argv)"\b"
-          and fisher add $argv 2>&1 \
+          fisher ls | string match -qr "\b"(command basename $argv)"\b"
+          or fisher add $argv 2>&1 \
           | not string match -qr 'cannot (add|stat)'
         end
     end
@@ -153,25 +153,25 @@ function dependency -d 'manage dependencies'
         set -a installed $dependency
         continue
       end
-      if contains (command basename $dependency) $argv
+      if contains $dependency $argv
         if eval $verify $dependency >/dev/null 2>&1
           set -a installed $dependency
           continue
         end
       end
-      if contains (command basename $dependency) $_flag_plugin $argv
+      if contains $dependency $_flag_plugin $argv
         if dep_plugin check $dependency
           set -a installed $dependency
           continue
         end
       end
-      if contains (command basename $dependency) $_flag_pip $argv
+      if contains $dependency $_flag_pip $argv
         if pip show -q $dependency
           set -a installed $dependency
           continue
         end
       end
-      if contains (command basename $dependency) $flag_npm $argv
+      if contains $dependency $flag_npm $argv
         if npm list -g | string match -qe $dependency
           set -a installed $dependency
           continue
@@ -197,8 +197,7 @@ function dependency -d 'manage dependencies'
         for i in (seq (count $installed))
           echo $i. $installed[$i]
         end
-        reg -e (math (count $installed) + 1)'. |all|\n'\
-        (math (count $installed) + 2)'. |cancel|'
+        reg -e (math (count $installed) + 1)'. |all|\n'(math (count $installed) + 2)'. |cancel|'
 
         # Select dependencies to be removed
         read -n 1 -lP 'Which? [list one or more]: ' opt
@@ -259,7 +258,7 @@ function dependency -d 'manage dependencies'
       or set -l packages $not_installed
       if set --query _flag_name
         test (count $packages) -eq 1
-        and wrn -o "Plugin |$_flag_name| requires dependency |$packages|. Install it? [y/n]: "
+        and wrn -o "Plugin |$_flag_name| requires dependency |"(string match -ar '[^/]+$' $packages)"|. Install it? [y/n]: "
         or wrn -o "Plugin |$_flag_name| requires dependencies |"(string match -ar '[^/]+$' $packages | string join '|, |')"|. Install them? [y/n]: "
         read -n 1 | string match -qir y
         or return 1
