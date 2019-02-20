@@ -197,8 +197,8 @@ function dependency -d 'manage dependencies'
         for i in (seq (count $installed))
           echo $i. $installed[$i]
         end
-        printf '%s\n' (math (count $installed) + 1)'. all' \
-        (math (count $installed) + 2)'. cancel'
+        reg -e (math (count $installed) + 1)'. |all|\n'\
+        (math (count $installed) + 2)'. |cancel|'
 
         # Select dependencies to be removed
         read -n 1 -lP 'Which? [list one or more]: ' opt
