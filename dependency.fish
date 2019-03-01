@@ -22,7 +22,12 @@ function dependency -d 'manage dependencies'
           omf install $argv 2>&1 \
           | not string match -qr '^(Error$|Could not install)'
           or return 1
-          for function in (ls $OMF_PATH/pkg/(command basename $argv)/functions)
+          set -l install_script \
+          $OMF_PATH/pkg/(command basename $argv)/hooks/install.fish
+          test -e $install_script
+          and fish $install_script
+          for function in \
+          (realpath  -s $OMF_PATH/pkg/(command basename $argv)/functions/*)
             source $function
           end
         end
