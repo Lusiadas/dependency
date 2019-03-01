@@ -4,45 +4,27 @@ function dependency -d 'manage dependencies'
   function dep_plugin -d "Install or uninstall a fish plugin"
     switch "$argv[1]"
       case uninstall
-        if type -q omf
-          omf remove (command basename $argv[2]) >/dev/null 2>&1
-        else
-          fisher rm (command basename $argv[2]) >/dev/null 2>&1
-        end
+        omf remove (command basename $argv[2]) >/dev/null 2>&1
       case check
-        if type -q omf
-          omf list | string match -qr "\b"(command basename $argv[2])"\b"
-        else
-          fisher ls | string match -qr "\b"(command basename $argv[2])"\b"
-        end
+        omf list | string match -qr "\b"(command basename $argv[2])"\b"
       case update
-        if type -q omf
           if omf list | string match -qr "\b"(command basename $argv[2])"\b"
-            omf update (command basename $argv[2]) >"$PREFIX"/tmp/dep_plugin 2>&1
-            if grep -qE '(Error$|Could not find)' "$PREFIX"/tmp/dep_plugin
-              command rm "$PREFIX"/tmp/dep_plugin
-              return 1
-            end
-            command sed -n \$p "$PREFIX"/tmp/dep_plugin
-            command rm "$PREFIX"/tmp/dep_plugin
+            omf update (command basename $argv[2]) 2>&1 \
+            | not string match -qer '(Error$|Could not find)'
           else
-            omf install $argv[2] 2>&1 | not string match -qr '^(Error|Could not install)'
+            dep_plugin $argv[2] 2>&1
           end
-        else
-          fisher add (command basename $argv[2]) 2>&1 \
-          | not string match -qr 'cannot (add|stat)'
-        end
       case '*'
-        type -t (command basename $argv) 2>/dev/null | string match -q function
+        type -t (command basename $argv) 2>/dev/null \
+        | string match -q function
         and return 0
-        if type -q omf
-          omf list | string match -qr "\b"(command basename $argv)"\b"
-          or omf install $argv 2>&1 \
+        if not omf list | string match -qr "\b"(command basename $argv)"\b"
+          omf install $argv 2>&1 \
           | not string match -qr '^(Error$|Could not install)'
-        else
-          fisher ls | string match -qr "\b"(command basename $argv)"\b"
-          or fisher add $argv 2>&1 \
-          | not string match -qr 'cannot (add|stat)'
+          or return 1
+          for function in (ls $OMF_PATH/pkg/(command basename $argv)/functions)
+            source $function
+          end
         end
     end
   end
@@ -256,7 +238,7 @@ function dependency -d 'manage dependencies'
       set --query _flag_update
       and set -l packages $dependencies
       or set -l packages $not_installed
-      if set --query _flag_name
+      if test -n "$_flag_name" -a -n "$not_installed"
         test (count $packages) -eq 1
         and wrn -o "Plugin |$_flag_name| requires dependency |"(string match -ar '[^/]+$' $packages)"|. Install it? [y/n]: "
         or wrn -o "Plugin |$_flag_name| requires dependencies |"(string match -ar '[^/]+$' $packages | string join '|, |')"|. Install them? [y/n]: "
