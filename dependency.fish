@@ -259,20 +259,20 @@ function dependency -d 'manage dependencies'
         or dim -on "Installing |"(command basename $dependency)"|... "
         if contains $dependency $argv
           if set --query _flag_update
-            eval "$sudo" $update $dependency 2>/dev/null \
-            | string match -e version
+            eval "$sudo" $update $dependency \
+            | string match -r "^$dependency.*"
             and continue
-          else if eval "$sudo" $install $dependency >/dev/null 2>&1
-            reg -o "|$dependency| added."
-            continue
           end
+          eval "$sudo" $install $dependency \
+          | string match -r "^$dependency.*"
+          and continue
         end
         if contains $dependency $_flag_pip $argv
           if set --query _flag_update
-            command pip install --upgrade $dependency 2>/dev/null \
+            command pip install --user --upgrade $dependency 2>/dev/null \
             | command sed -n 1p
             and continue
-          else if command pip install $dependency >/dev/null 2>&1
+          else if command pip install --user $dependency >/dev/null 2>&1
             reg -o "|$dependency| added."
             continue
           end
