@@ -259,11 +259,11 @@ function dependency -d 'manage dependencies'
         or dim -on "Installing |"(command basename $dependency)"|... "
         if contains $dependency $argv
           if set --query _flag_update
-            eval "$sudo" $update $dependency \
+            eval "$sudo" $update $dependency 2>/dev/null \
             | string match -r "^$dependency.*"
             and continue
           end
-          eval "$sudo" $install $dependency \
+          eval "$sudo" $install $dependency 2>/dev/null \
           | string match -r "^$dependency.*"
           and continue
         end
