@@ -126,7 +126,7 @@ function dependency -d 'manage dependencies'
         set --query _flag_update
         or continue
         string match -q $flags[$i] _flag_pip
-        and pip install --upgrade pip >/dev/null
+        and pip install --upgrade pip >/dev/null 2>&1
         or npm update npm -g
       end
     end
@@ -266,8 +266,7 @@ function dependency -d 'manage dependencies'
           eval "$sudo" $install $dependency 2>/dev/null \
           | string match -r "^$dependency.*"
           and continue
-        end
-        if contains $dependency $_flag_pip $argv
+        else if contains $dependency $_flag_pip
           if set --query _flag_update
             command pip install --user --upgrade $dependency 2>/dev/null \
             | command sed -n 1p
@@ -276,8 +275,7 @@ function dependency -d 'manage dependencies'
             reg -o "|$dependency| added."
             continue
           end
-        end
-        if contains $dependency $_flag_plugin $argv
+        else if contains $dependency $_flag_plugin
           if set --query _flag_update
             dep_plugin update $dependency
             and continue
@@ -285,8 +283,7 @@ function dependency -d 'manage dependencies'
             reg -o "|$dependency| added."
             continue
           end
-        end
-        if contains $dependency $_flag_npm $argv
+        else if contains $dependency $_flag_npm
           if set --query _flag_update
             npm install -g $dependency >/dev/null 2>&1 \
             | string match -ar '(^\+ .+|.*updated.+)' | uniq
