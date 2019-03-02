@@ -220,7 +220,7 @@ function dependency -d 'manage dependencies'
         end
         if contains $dependency $flag_npm
           if command npm list -g | string match -qr "\b$dependency(?=@)"
-            command npm uninstall -g $dependency >/dev/null 2>&1
+            eval "$sudo" npm uninstall -g $dependency >/dev/null 2>&1
             reg -o "|$dependency| removed."
             continue
           end
@@ -287,10 +287,10 @@ function dependency -d 'manage dependencies'
           end
         else if contains $dependency $_flag_npm
           if set --query _flag_update
-            npm install -g $dependency >/dev/null 2>&1 \
+            eval "$sudo" npm install -g $dependency >/dev/null 2>&1 \
             | string match -ar '(^\+ .+|.*updated.+)' | uniq
             and continue
-          else if command npm install -g $dependency >/dev/null 2>&1
+          else if eval "$sudo" npm install -g $dependency >/dev/null 2>&1
             reg -o "|$dependency| added."
             continue
           end
