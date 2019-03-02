@@ -18,18 +18,18 @@ function dependency -d 'manage dependencies'
         type -t (command basename $argv) 2>/dev/null \
         | string match -q function
         and return 0
-        if not omf list | string match -qr "\b"(command basename $argv)"\b"
-          omf install $argv 2>&1 \
-          | not string match -qr '^(Error$|Could not install)'
-          or return 1
-          set -l install_script \
-          $OMF_PATH/pkg/(command basename $argv)/hooks/install.fish
-          test -e $install_script
-          and fish $install_script
-          for function in \
-          (realpath  -s $OMF_PATH/pkg/(command basename $argv)/functions/*)
-            source $function
-          end
+        omf list | string match -qr "\b"(command basename $argv)"\b"
+        and return 0
+        omf install $argv 2>&1 \
+        | not string match -qr '^(Error$|Could not install)'
+        or return 1
+        set -l install_script \
+        $OMF_PATH/pkg/(command basename $argv)/hooks/install.fish
+        test -e "$install_script"
+        and fish "$install_script"
+        for function in \
+        (realpath  -s $OMF_PATH/pkg/(command basename $argv)/functions/*)
+          source $function
         end
     end
   end
@@ -89,9 +89,7 @@ function dependency -d 'manage dependencies'
       set update 'emerge -DuN'
       set remove 'emerge -c'
     else if test "$argv"
-      test (count $argv) -eq 1
-      and err "A package manager wasn't found to handle package |$argv|"
-      or err "A package manager wasn't found to handle packages |"(string join '|, |' $argv)"|"
+      err "A package manager wasn't found to handle |"(string join '|, |' $argv)"|"
       reg 'Ignoring... '
       set --erase argv
     end
