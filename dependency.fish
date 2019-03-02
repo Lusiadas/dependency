@@ -153,15 +153,19 @@ function dependency -d 'manage dependencies'
         end
       end
       if contains $dependency $_flag_pip $argv
-        if pip show -q $dependency
-          set -a installed $dependency
-          continue
+        if test -qf pip
+          if pip show -q $dependency 2>/dev/null
+            set -a installed $dependency
+            continue
+          end
         end
       end
       if contains $dependency $flag_npm $argv
-        if npm list -g | string match -qe $dependency
-          set -a installed $dependency
-          continue
+        if test -qf npm
+          if npm list -g | string match -qe $dependency
+            set -a installed $dependency
+            continue
+          end
         end
       end
       set not_installed $not_installed $dependency
