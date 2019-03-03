@@ -44,8 +44,8 @@ function dependency -d 'manage dependencies'
 
     # Check for available permissions
     set -l sudo
-    if id -u $USER | string match -qv 0
-      if id -g $USER | string match -qe sudo
+    if command id -u | string match -qv 0
+      if command groups | string match -qe sudo
         type -qf sudo
         and set sudo sudo
       end
@@ -151,7 +151,7 @@ function dependency -d 'manage dependencies'
         end
       end
       if contains $dependency $_flag_pip $argv
-        if test -qf pip
+        if type -qf pip
           if pip show -q $dependency 2>/dev/null
             set -a installed $dependency
             continue
@@ -159,7 +159,7 @@ function dependency -d 'manage dependencies'
         end
       end
       if contains $dependency $flag_npm $argv
-        if test -qf npm
+        if type -qf npm
           if npm list -g | string match -qe $dependency
             set -a installed $dependency
             continue
@@ -261,13 +261,15 @@ function dependency -d 'manage dependencies'
         or dim -on "Installing |"(command basename $dependency)"|... "
         if contains $dependency $argv
           if set --query _flag_update
-            eval "$sudo" $update $dependency 2>/dev/null \
-            | string match -r "^$dependency.*"
-            and continue
+            if eval "$sudo" $update $dependency 2>/dev/null 2>&1
+              reg -o "|$dependency| was installed"
+              continue
+            end
           end
-          eval "$sudo" $install $dependency 2>/dev/null \
-          | string match -r "^$dependency.*"
-          and continue
+          if eval "$sudo" $install $dependency 2>/dev/null 2>&1
+            reg -o "|$dependency| was installed"
+            continue
+          end
         else if contains $dependency $_flag_pip
           if set --query _flag_update
             command pip install --user --upgrade $dependency 2>/dev/null \
