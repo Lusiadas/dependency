@@ -135,7 +135,14 @@ function dependency -d 'manage dependencies'
         continue
       end
       if contains $dependency $argv
-        if eval $verify $dependency >/dev/null 2>&1
+        set -l found
+        for alternative in (string split / $dependency)
+          eval $verify $alternative >/dev/null 2>&1
+          or continue
+          set found true
+          break
+        end
+        if test "$found"
           set -a installed $dependency
           continue
         end
@@ -196,7 +203,14 @@ function dependency -d 'manage dependencies'
       for dependency in $installed
         dim -n "Uninstalling |$dependency|... "
         if contains $dependency $argv
-          if eval "$sudo" $uninstall $dependency >/dev/null 2>&1
+          set -l found
+          for alternative in (string split / $dependency)
+            eval "$sudo" $uninstall $alternative >/dev/null 2>&1
+            or continue
+            set found true
+            break
+          end
+          if test "$found"
             reg -o "|$dependency| removed."
             continue
           end
@@ -256,16 +270,23 @@ function dependency -d 'manage dependencies'
         and dim -on "Updating |"(command basename $dependency)"|... "
         or dim -on "Installing |"(command basename $dependency)"|... "
         if contains $dependency $argv
-          if set --query _flag_update
-            if eval "$sudo" $update $dependency 2>/dev/null 2>&1
-              reg -o "|$dependency| was installed"
-              continue
+          set -l found
+          for alternative in (string split / $dependency)
+            if set --query _flag_update
+              if eval "$sudo" $update $alternative 2>/dev/null 2>&1
+                reg -o "|$alternative| is at its latest version"
+                set found true
+                break
+              end
+            end
+            if eval "$sudo" $install $alternative 2>/dev/null 2>&1
+              reg -o "|$alternative| was installed"
+              set found true
+              break
             end
           end
-          if eval "$sudo" $install $dependency 2>/dev/null 2>&1
-            reg -o "|$dependency| was installed"
-            continue
-          end
+          test "$found"
+          and continue
         else if contains $dependency $_flag_pip
           if set --query _flag_update
             command pip install --user --upgrade $dependency 2>/dev/null \

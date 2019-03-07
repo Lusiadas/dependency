@@ -6,7 +6,7 @@ A system agnostic function to have packages installed, updated, or removed.
 
 ## Options
 
-- `-i/--install`, install packages. This is the default option.
+- `-i/--install`, install packages. This is the default option. Packages with different names across distributions can have their alternative names described separated by a slash. i.e. `libgpgme-dev/gpgme-dev`.
 
 - `-u/--update`, update or, if not installed, install packages
 
