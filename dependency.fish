@@ -27,8 +27,8 @@ end
 dep_plugin https://gitlab.com/lusiadas/feedback
 
 # Parse arguments
-if not argparse -x (string join -- ' -x ' i,{u,r,f} u,{r,f} | string split ' ') 'r/remove' 'n/name=' 'f/force=+' 'N/npm=+' 'p/pip=+' 'P/plugin=+' -- $argv 2>"$PREFIX"/tmp/err
-  err (grep -m 1 -oP '(?<=: ).+' "$PREFIX"/tmp/err)
+if argparse -n dependency 'r/remove' 'n/name=' 'f/force=+' 'N/npm=+' 'p/pip=+' 'P/plugin=+' -- $argv 2>&1 | read err 
+  err $err
   exit 1
 end
 
