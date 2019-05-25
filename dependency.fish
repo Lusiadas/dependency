@@ -29,7 +29,7 @@ dep_plugin https://gitlab.com/lusiadas/feedback
 # Parse arguments
 if not argparse -x (string join -- ' -x ' i,{u,r,f} u,{r,f} | string split ' ') 'r/remove' 'n/name=' 'f/force=+' 'N/npm=+' 'p/pip=+' 'P/plugin=+' -- $argv 2>"$PREFIX"/tmp/err
   err (grep -m 1 -oP '(?<=: ).+' "$PREFIX"/tmp/err)
-  return 1
+  exit 1
 end
 
 # Check for available permissions
@@ -159,7 +159,7 @@ if test -n "$_flag_remove" -a -n "$installed"
     read -n 1 -p "wrn 'Uninstall some dependencies as well? [y/n]: '" \
     | string match -qir y
   end
-  or return 0
+  or exit 0
 
   # List available dependencies
   if test (count $installed) -gt 1
@@ -171,7 +171,7 @@ if test -n "$_flag_remove" -a -n "$installed"
     # Select dependencies to be removed
     read -n 1 -lP 'Which? [list one or more]: ' opt
     string match -qr -- "[^1-"(math (count $installed) + 1)"]" $opt
-    and return 0
+    and exit 0
     test $opt -le (count $installed)
     and set installed $installed[$opt]
   end
@@ -216,7 +216,7 @@ if test -n "$_flag_remove" -a -n "$installed"
 
 # Install dependencies
 else if test -z "$not_installed"
-  return 0
+  exit 0
 
 else
   # Ask for confirmation
@@ -225,7 +225,7 @@ else
     and wrn -o "Plugin |$_flag_name| requires dependency |"(string match -ar '[^/]+$' $not_installed)"|. Install it? [y/n]: "
     or wrn -o "Plugin |$_flag_name| requires dependencies |"(string match -ar '[^/]+$' $not_installed | string join '|, |')"|. Install them? [y/n]: "
     read -n 1 | string match -qir y
-    or return 1
+    or exit 1
   end
 
   # Find appropriate package manager to install
