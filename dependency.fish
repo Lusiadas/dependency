@@ -19,7 +19,7 @@ function dep_plugin -d "Install or uninstall a fish plugin"
       test -e "$install_script"
       and fish "$install_script"
       for function in \
-      (realpath  -s $OMF_PATH/pkg/(command basename $argv)/functions/*)
+      (command realpath -s $OMF_PATH/pkg/(command basename $argv)/functions/*)
         source $function
       end
   end
@@ -153,9 +153,11 @@ if test -n "$_flag_remove" -a -n "$installed"
   # Offer to uninstall dependencies
   echo -en \r(tput el)
   if test (count $installed) -eq 1
-    read -n 1 -p "wrn \"Uninstall dependency |$installed|? [y/n]: \"" | string match -qir y
+    read -n 1 -p "wrn \"Uninstall dependency |$installed|? [y/n]: \"" \
+    | string match -qir y
   else
-    read -n 1 -p "wrn 'Uninstall some dependencies as well? [y/n]: '" | string match -qir y
+    read -n 1 -p "wrn 'Uninstall some dependencies as well? [y/n]: '" \
+    | string match -qir y
   end
   or return 0
 
