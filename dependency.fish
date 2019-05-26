@@ -31,6 +31,7 @@ if argparse -n dependency 'r/remove' 'n/name=' 'f/force=+' 'N/npm=+' 'p/pip=+' '
   err $err
   exit 1
 end
+set -l --append _flag_plugin (omf list | string match -qr "\b(feedback|contains_opts)\b")
 
 # Check for available permissions
 set -l sudo
@@ -110,8 +111,10 @@ end
 # Check if package is installed
 set --query _flag_remove
 and dim -on "Checking for dependencies... "
-set -l dependencies (printf '%s\n' $argv $_flag_pip $_flag_npm $_flag_plugin $_flag_force | sort | uniq)
-for dependency in $dependencies
+set -l installed
+set -l not_installed
+for dependency in (command printf '%s\n' $argv $_flag_pip $_flag_npm $_flag_plugin $_flag_force \
+| command awk '!x[$0]++')
   if type -q (command basename $dependency)
     set -a installed $dependency
     continue
@@ -166,14 +169,18 @@ if test -n "$_flag_remove" -a -n "$installed"
     for i in (seq (count $installed))
       echo $i. $installed[$i]
     end
-    reg -e (math (count $installed) + 1)'. |all|\n'(math (count $installed) + 2)'. |cancel|'
+    reg -e '[a]. |all|\n[c]. |cancel|'
 
     # Select dependencies to be removed
-    read -n 1 -lP 'Which? [list one or more]: ' opt
-    string match -qr -- "[^1-"(math (count $installed) + 1)"]" $opt
-    and exit 0
-    test $opt -le (count $installed)
-    and set installed $installed[$opt]
+    read -P 'Which? [list one or more]: ' opt
+    if string match -qvr -- '[\d,a-](ll)?' $opt
+      reg "Dependency uninstall cancelled"
+      exit 0
+    else if not string match -qr -- 'a(ll)?' $opt
+      set opt (string replace ',' ' ' $opt)
+      set opt (string replace '-' '..' $opt)
+      set installed $installed[$opt]
+    end
   end
 
   # Find the appropriate package manager to uninstall
@@ -193,7 +200,7 @@ if test -n "$_flag_remove" -a -n "$installed"
       end
     end
     if contains $dependency $_flag_plugin
-      if dep_plugin uninstall $_flag_plugin
+      if dep_plugin uninstall $dependency
         reg -o "|$dependency| removed."
         continue
       end
@@ -213,6 +220,10 @@ if test -n "$_flag_remove" -a -n "$installed"
     end
     err -o "Failed to uninstall |$dependency|"
   end
+  omf list | string match -qr "\bfeedback\b"
+  and omf list | not string match -qr "\bcontains_opts\b"
+  and dep_plugin uninstall feedback
+  and reg -o "|feedback| removed."
 
 # Install dependencies
 else if test -z "$not_installed"
@@ -233,25 +244,17 @@ else
   for dependency in $not_installed
     dim -on "Installing |"(command basename $dependency)"|... "
     if contains $dependency $argv
-      if eval "$sudo" $install $dependency >/dev/null 2>&1
-        reg -o "|$dependency| was installed"
-        continue
-      end
+      eval "$sudo" $install $dependency >/dev/null 2>&1
     else if contains $dependency $_flag_pip
-      if command pip install --user $dependency >/dev/null 2>&1
-        reg -o "|$dependency| added."
-        continue
-      end
+      command pip install --user $dependency >/dev/null 2>&1
     else if contains $dependency $_flag_plugin
-      if dep_plugin $dependency
-        reg -o "|$dependency| added."
-        continue
-      end
+      dep_plugin $dependency
     else if contains $dependency $_flag_npm
-      if command npm install -g $dependency >/dev/null 2>&1
-        reg -o "|$dependency| added."
-        continue
-      end
+      command npm install -g $dependency >/dev/null 2>&1
+    end
+    if $status = 0
+      reg -o "|$dependency| was installed"
+      continue    
     end
     err -o "Failed to install |$dependency|"
     set failed true
