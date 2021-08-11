@@ -1,7 +1,5 @@
 # dependency
 
-## Description
-
 A system agnostic function to have dependencies be installed or removed.
 
 ## Options
